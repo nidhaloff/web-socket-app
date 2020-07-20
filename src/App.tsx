@@ -37,7 +37,7 @@ const uriConfig = {
 
 //const socket = io(uriConfig.local);
 
-let clients: { close: () => void; }[] | WebSocket[] = [];
+let clients: Array<WebSocket> = [];
 
 const App: React.FC = () => {
   const [res, setRes] = useState("");
@@ -85,8 +85,17 @@ const App: React.FC = () => {
   };
 
   const deconnect = () => { 
-    clients[0].close(); 
-    console.log("socket closed");
+    if (clients && clients.length === 1 && clients[0])
+    {
+      clients[0].close();
+      console.log(clients[0]);
+      delete clients[0];
+      console.log("Deconnection from socket");
+    }
+    else {
+      console.log("there is no socket to close");
+    }
+    
   }
 
   return (
