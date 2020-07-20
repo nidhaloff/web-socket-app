@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { IonApp, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonList } from "@ionic/react";
 import {
   IonItemSliding,
@@ -29,29 +29,72 @@ import "./theme/variables.css";
 import io from "socket.io-client";
 
 const uriConfig = {
-  online: "wss://echo.wss-websocket.net", 
+  online: "wss://javascript.info/article/websocket/demo/hello",
+  online2: "wss://javascript.info/chat", 
+  online3: "wss://javascript.info/article/websocket/chat/ws",
   local: "http://localhost:3000"
 }
 
-const socket = io(uriConfig.local);
+//const socket = io(uriConfig.local);
+
+let clients: { close: () => void; }[] | WebSocket[] = [];
 
 const App: React.FC = () => {
   const [res, setRes] = useState("");
 
+  useEffect(() => {
+    
+  });
+
   const connect = () => {
-    socket.emit("event-connect", "subscribe");
+   /*  socket.emit("event-connect", "subscribe");
     socket.on("return-data", (data: string) => {
       setRes(data);
       console.log(data);
-    });
+    }); */
+
+    console.log("connect function called");
+
+    const socket = new WebSocket(uriConfig.online3);
+    clients.push(socket);
+
+    socket.onopen = function(e) { 
+      console.log("[open] Connection established");
+      console.log("Sending a msg to server");
+      socket.send("My name is John");
+    };
+    
+    socket.onmessage = function(event) {
+      console.log(`[message] Data received from server: ${event.data}`);
+      setRes('received porsche data successfully');
+    };
+    
+    socket.onclose = function(event) {
+      if (event.wasClean) {
+        console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+      } else {
+        // e.g. server process killed or network down
+        // event.code is usually 1006 in this case
+        console.log('[close] Connection died');
+      }
+    };
+    
+    socket.onerror = function(error) {
+      console.log(`[error] ${error}`);
+    };
   };
+
+  const deconnect = () => { 
+    clients[0].close(); 
+    console.log("socket closed");
+  }
 
   return (
     <IonApp>
       <IonList>
           <IonItemSliding>
             <IonItemOptions onIonSwipe={connect} side="start">
-              <IonItemOption>Subscribe</IonItemOption>
+              <IonItemOption onClick={connect}>Subscribe</IonItemOption>
               <IonItemOption
                 color="danger"
                 onClick={() => console.log("share clicked")}
@@ -64,7 +107,7 @@ const App: React.FC = () => {
               <IonLabel>Topic Subscription</IonLabel>
             </IonItem>
 
-            <IonItemOptions side="end">
+            <IonItemOptions onIonSwipe={deconnect} side="end">
               <IonItemOption onClick={() => console.log("unread clicked")}>
                 Unread
               </IonItemOption>
